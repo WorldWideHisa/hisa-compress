@@ -2,3 +2,4 @@ node_modules/
 dist/
 .env
 .develop_memo.txt
+uploads/
