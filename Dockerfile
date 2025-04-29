@@ -1,7 +1,11 @@
 FROM denoland/deno:latest
 
 # FFmpegとその依存関係をインストール
+RUN echo "deb http://ftp.jp.debian.org/debian bookworm-backports main contrib non-free non-free-firmware" > /etc/apt/sources.list.d/backports.list
 RUN apt-get update && apt-get install -y \
+    libheif1 \
+    imagemagick \
+    libheif-examples \
     ffmpeg \
     && rm -rf /var/lib/apt/lists/*
 

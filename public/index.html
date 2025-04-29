@@ -61,8 +61,18 @@
           <div class="compression-info">
             <p>圧縮率: <span id="compression-ratio"></span>%</p>
             <button id="download-button" class="primary-button">ダウンロード</button>
+            <button id="create-thumbnail-button" class="secondary-button">サムネイル作成</button>
             <button id="start-over" class="secondary-button">新しい画像を圧縮</button>
           </div>
+
+          <section id="thumbnail-section" class="thumbnail-section hidden">
+            <h3>サムネイル</h3>
+            <div class="thumbnail-container">
+              <img id="thumbnail-image" src="" alt="サムネイル">
+              <p id="thumbnail-size"></p>
+              <button id="download-thumbnail-button" class="primary-button">サムネイルをダウンロード</button>
+            </div>
+          </section>
         </div>
       </section>
     </main>
