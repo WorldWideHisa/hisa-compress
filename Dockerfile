@@ -1,12 +1,13 @@
 FROM denoland/deno:latest
 
 # FFmpegとその依存関係をインストール
-RUN echo "deb http://ftp.jp.debian.org/debian bookworm-backports main contrib non-free non-free-firmware" > /etc/apt/sources.list.d/backports.list
-RUN apt-get update && apt-get install -y \
-    libheif1 \
-    imagemagick \
-    libheif-examples \
-    ffmpeg \
+RUN apt-get update && apt-get install -y curl gnupg ffmpeg software-properties-common && \
+    echo "deb http://ftp.jp.debian.org/debian bookworm-backports main contrib non-free non-free-firmware" >> /etc/apt/sources.list && \
+    apt-get update && apt-get install -y -t bookworm-backports libheif1 libheif-plugin-libde265 && \
+    apt-get update && apt-get install -y --reinstall imagemagick && \
+    # libheif のバージョン確認
+    echo "libheif version:" && \
+    dpkg -s libheif1 | grep Version \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
