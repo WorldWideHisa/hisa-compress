@@ -26,6 +26,7 @@ RUN deno cache --reload --import-map=import_map.json deps.ts
 # ソースコードをコピー
 COPY src/ ./src/
 COPY public/ ./public/
+COPY imagetest/ ./imagetest/
 
 # 必要なディレクトリを作成
 RUN mkdir -p uploads processed

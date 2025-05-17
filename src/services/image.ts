@@ -57,8 +57,8 @@ export async function processImage(inputPath: string, filename: string): Promise
         // ImageMagickのconvertコマンドを使用
         console.log(`Using ImageMagick convert with input: ${inputPath}, output: ${outputPath}`);
 
-        // シェルコマンドとして実行（フォーマットを明示的に指定）
-        const cmd = `magick "${inputPath}" -format jpg "${outputPath}"`;
+        // シェルコマンドとして実行（フォーマットを明示的に指定、リサイズと品質設定を追加）
+        const cmd = `magick "${inputPath}" -resize "1248x>" -format jpg -quality 90 "${outputPath}"`;
         console.log(`Executing command: ${cmd}`);
 
         const p = Deno.run({
@@ -81,7 +81,7 @@ export async function processImage(inputPath: string, filename: string): Promise
 
           // 代替コマンドを試す
           console.log("Trying alternative command...");
-          const altCmd = `convert "${inputPath}" -auto-orient -quality 100 "${outputPath}"`;
+          const altCmd = `convert "${inputPath}" -auto-orient -resize "1248x>" -quality 90 "${outputPath}"`;
           console.log(`Executing alternative command: ${altCmd}`);
 
           const altP = Deno.run({

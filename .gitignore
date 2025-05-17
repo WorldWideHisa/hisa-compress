@@ -3,3 +3,5 @@ dist/
 .env
 .develop_memo.txt
 uploads/
+imagetest/
+processed/
