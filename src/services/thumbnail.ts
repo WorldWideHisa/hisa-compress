@@ -22,7 +22,7 @@ export async function createThumbnail(inputPath: string, filename: string): Prom
 
     // 出力ファイル名の生成
     const baseName = basename(filename, extname(filename));
-    const outputFilename = `${baseName}-thumbnail.avif`;
+    const outputFilename = `${baseName}-thumbnail.jpg`;
     const outputPath = `./processed/${outputFilename}`;
 
     // 画像処理
@@ -39,65 +39,45 @@ export async function createThumbnail(inputPath: string, filename: string): Prom
       throw new Error(`Unsupported image format: ${fileExt}`);
     }
 
-    // 短辺を基準に正方形に切り出し、240x240にリサイズ
-    const thumbnailSize = 240;
-
-    // 短辺を特定
-    const shortSide = Math.min(image.width, image.height);
+    // OGP用の横長サムネイル（1200x630px）を作成
+    const thumbnailWidth = 1200;
+    const thumbnailHeight = 630;
+    const targetRatio = thumbnailWidth / thumbnailHeight; // 約1.905
 
     // 中央座標を計算
     const centerX = Math.floor(image.width / 2);
     const centerY = Math.floor(image.height / 2);
 
-    // 切り取り開始位置を計算（短辺を基準に正方形になるよう）
-    const startX = Math.max(0, centerX - Math.floor(shortSide / 2));
-    const startY = Math.max(0, centerY - Math.floor(shortSide / 2));
+    // 画像のアスペクト比を計算
+    const imageRatio = image.width / image.height;
 
-    // 切り取りサイズを計算（画像端の場合に調整）
-    const cropSize = Math.min(shortSide, Math.min(image.width - startX, image.height - startY));
+    let cropWidth: number;
+    let cropHeight: number;
 
-    // 正方形に切り取り
-    const thumbnail = image.crop(startX, startY, cropSize, cropSize);
-
-    // 240x240にリサイズ
-    thumbnail.resize(thumbnailSize, thumbnailSize);
-
-    // 一時的なJPEGファイルとして保存
-    const tempJpegPath = `./processed/${baseName}-thumbnail-temp.jpg`;
-    const jpegData = await thumbnail.encodeJPEG(100);
-    await Deno.writeFile(tempJpegPath, jpegData);
-
-    // FFmpegを使用してJPEGからAVIFに変換
-    const ffmpegCmd = `ffmpeg -i "${tempJpegPath}" -c:v libaom-av1 -crf 4 -f avif -y "${outputPath}"`;
-    const ffmpegP = Deno.run({
-      cmd: ["sh", "-c", ffmpegCmd],
-      stdout: "piped",
-      stderr: "piped"
-    });
-
-    const ffmpegStatus = await ffmpegP.status();
-
-    // 一時ファイルを削除
-    try {
-      await Deno.remove(tempJpegPath);
-    } catch (e) {
-      console.warn("Failed to remove temporary file:", e);
+    // アスペクト比に基づいてクロップサイズを決定
+    if (imageRatio > targetRatio) {
+      // 画像が横長すぎる場合：高さを基準にする
+      cropHeight = image.height;
+      cropWidth = Math.floor(cropHeight * targetRatio);
+    } else {
+      // 画像が縦長または同じ比率の場合：幅を基準にする
+      cropWidth = image.width;
+      cropHeight = Math.floor(cropWidth / targetRatio);
     }
 
-    if (!ffmpegStatus.success) {
-      const errorBytes = await ffmpegP.stderrOutput();
-      let errorMessage = "Unknown error";
-      try {
-        errorMessage = new TextDecoder().decode(errorBytes);
-      } catch (e) {
-        console.error("Failed to decode error message:", e);
-      }
-      console.error(`FFmpeg conversion failed: ${errorMessage}`);
-      ffmpegP.close();
-      throw new Error("FFmpeg conversion failed");
-    }
+    // 切り取り開始位置を計算（中央から切り出し）
+    const startX = Math.max(0, centerX - Math.floor(cropWidth / 2));
+    const startY = Math.max(0, centerY - Math.floor(cropHeight / 2));
 
-    ffmpegP.close();
+    // 1200x630の比率で切り取り
+    const thumbnail = image.crop(startX, startY, cropWidth, cropHeight);
+
+    // 1200x630にリサイズ
+    thumbnail.resize(thumbnailWidth, thumbnailHeight);
+
+    // JPEGファイルとして保存（品質90%）
+    const jpegData = await thumbnail.encodeJPEG(90);
+    await Deno.writeFile(outputPath, jpegData);
 
     // 圧縮後のファイルサイズを取得
     const processedInfo = await Deno.stat(outputPath);
